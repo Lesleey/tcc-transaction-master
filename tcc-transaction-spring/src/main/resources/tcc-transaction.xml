@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:aop="http://www.springframework.org/schema/aop" xmlns:task="http://www.springframework.org/schema/task"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd     http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop.xsd http://www.springframework.org/schema/task http://www.springframework.org/schema/task/spring-task.xsd">
+   <!-- 启用aspectj注解-->
+    <aop:aspectj-autoproxy proxy-target-class="true"/>
+    <!--springbean工厂-->
+    <bean id="springBeanFactory" class="org.mengyun.tcctransaction.spring.support.SpringBeanFactory"/>
+    <!--后置处理器，用来将springbeanfactory注册到tcc facotrys中-->
+    <bean id="springPostProcessor" class="org.mengyun.tcctransaction.spring.support.SpringPostProcessor"/>
+
+    <!--主要是初始化事务管理器-->
+    <bean id="transactionConfigurator" class="org.mengyun.tcctransaction.spring.support.SpringTransactionConfigurator"
+          init-method="init"/>
+
+    <!--将transactionConfigurator配置到切面中-->
+    <bean id="compensableTransactionAspect" class="org.mengyun.tcctransaction.spring.ConfigurableTransactionAspect"
+          init-method="init">
+        <property name="transactionConfigurator" ref="transactionConfigurator"/>
+    </bean>
+    <!--将transactionConfigurator配置到切面中-->
+    <bean id="resourceCoordinatorAspect" class="org.mengyun.tcctransaction.spring.ConfigurableCoordinatorAspect"
+          init-method="init">
+        <property name="transactionConfigurator" ref="transactionConfigurator"/>
+    </bean>
+
+    <task:annotation-driven/>
+
+    <!--将transactionConfigurator配置到事务恢复中-->
+    <bean id="transactionRecovery" class="org.mengyun.tcctransaction.recover.TransactionRecovery">
+        <property name="transactionConfigurator" ref="transactionConfigurator"/>
+    </bean>
+
+    <!--恢复调度-->
+    <bean id="recoverScheduler" class="org.springframework.scheduling.quartz.SchedulerFactoryBean"/>
+
+    <!--恢复调度工作的一些配置-->
+    <bean id="recoverScheduledJob" class="org.mengyun.tcctransaction.spring.recover.RecoverScheduledJob"
+          init-method="init">
+        <property name="transactionRecovery" ref="transactionRecovery"/>
+        <property name="transactionConfigurator" ref="transactionConfigurator"/>
+        <property name="scheduler" ref="recoverScheduler"/>
+    </bean>
+
+</beans>
