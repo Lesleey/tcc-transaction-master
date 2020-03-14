@@ -17,7 +17,7 @@ import java.util.Date;
 import java.util.List;
 
 /**
- * File 事务存储器， 该事务通过文件进行存储
+ * File 事务存储器， 通过文件系统来保存事务日志
  *
  * Created by changming.xie on 2/24/16.
  * this repository is suitable for single node, not for cluster nodes

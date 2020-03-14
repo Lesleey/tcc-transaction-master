@@ -18,7 +18,7 @@ public class TransactionManager {
     static final Logger logger = Logger.getLogger(TransactionManager.class.getSimpleName());
 
     /**
-     * 事务仓库，用来操作数据库的事务记录
+     * 事务仓库，用来存取数据库的事务记录：jdbc、redis、zk等
      */
     private TransactionRepository transactionRepository;
     /**
@@ -36,11 +36,11 @@ public class TransactionManager {
      * @return 事务
      */
     public Transaction begin() {
-        // 创建 根事务，事务状态为trying
+        // 1. 创建 根事务，事务状态为try
         Transaction transaction = new Transaction(TransactionType.ROOT);
-        // 存储 事务
+        // 2. 将该事务存储到数据库中
         transactionRepository.create(transaction);
-        // 注册 事务
+        // 3.  将事务添加到双端队列中
         registerTransaction(transaction);
         return transaction;
     }
@@ -52,11 +52,10 @@ public class TransactionManager {
      * @return 分支事务
      */
     public Transaction propagationNewBegin(TransactionContext transactionContext) {
-        // 创建 分支事务
+        //1. 创建分支事务
         Transaction transaction = new Transaction(transactionContext);
-        // 存储 事务
         transactionRepository.create(transaction);
-        // 注册 事务
+        //2. 将事务注册导本地线程中
         registerTransaction(transaction);
         return transaction;
     }
@@ -69,12 +68,12 @@ public class TransactionManager {
      * @throws NoExistedTransactionException 当事务不存在时
      */
     public Transaction propagationExistBegin(TransactionContext transactionContext) throws NoExistedTransactionException {
-        // 查询 事务
+        // 1. 从数据库中查询该根事务对应的分支事务
         Transaction transaction = transactionRepository.findByXid(transactionContext.getXid());
         if (transaction != null) {
-            // 设置 事务 状态
+            // 2. 设置事务状态
             transaction.changeStatus(TransactionStatus.valueOf(transactionContext.getStatus()));
-            // 注册 事务
+            // 3. 注册事务到本地线程的双端队列中
             registerTransaction(transaction);
             return transaction;
         } else {
@@ -86,16 +85,15 @@ public class TransactionManager {
      * 提交事务
      */
     public void commit() {
-        // 获取 事务
+        // 1. 获取当前事务
         Transaction transaction = getCurrentTransaction();
-        // 设置 事务状态 为 CONFIRMING
+        // 2. 设置当前的事务状态 为 CONFIRMING 并更新到数据库
         transaction.changeStatus(TransactionStatus.CONFIRMING);
-        // 更新 事务
         transactionRepository.update(transaction);
         try {
-            // 提交 事务
+            //3. 提交事务
             transaction.commit();
-            // 删除 事务
+            //4. 事务完成，从数据库中删除该事务记录
             transactionRepository.delete(transaction);
         } catch (Throwable commitException) {
             logger.error("compensable transaction confirm failed.", commitException);
@@ -107,16 +105,15 @@ public class TransactionManager {
      * 回滚事务
      */
     public void rollback() {
-        // 获取 事务
+        // 1. 获取当前事务
         Transaction transaction = getCurrentTransaction();
-        // 设置 事务状态 为 CANCELLING
+        // 2. 修改事务状态为 CANCELLING 并更新到数据库
         transaction.changeStatus(TransactionStatus.CANCELLING);
-        // 更新 事务
         transactionRepository.update(transaction);
         try {
-            // 提交 事务
+            //3. 回滚事务
             transaction.rollback();
-            // 删除 事务
+            //4. 从数据库中删除该记录
             transactionRepository.delete(transaction);
         } catch (Throwable rollbackException) {
             logger.error("compensable transaction rollback failed.", rollbackException);

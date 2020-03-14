@@ -27,43 +27,41 @@ public class PaymentServiceImpl {
     OrderRepository orderRepository;
 
 
-    //修改订单状态为支付中，并且调用远程扣减余额和红包
+    //修改订单状态为支付中，并且调用远程服务扣减余额和红包
     @Compensable(confirmMethod = "confirmMakePayment", cancelMethod = "cancelMakePayment")
     @Transactional
     public void makePayment(Order order, BigDecimal redPacketPayAmount, BigDecimal capitalPayAmount) {
         System.out.println("order try make payment called.time seq:" + DateFormatUtils.format(Calendar.getInstance(), "yyyy-MM-dd HH:mm:ss"));
-        // 更新订单状态为支付中
+        //1. 更新订单状态为支付中
         order.pay(redPacketPayAmount, capitalPayAmount);
         orderRepository.updateOrder(order);
-        // 资金账户余额支付订单
+        //2. 调用资金账户服务，使用账户支付订单
         String result = tradeOrderServiceProxy.record(null, buildCapitalTradeOrderDto(order));
-        // 红包账户余额支付订单
+        //3. 调用红包账户服务，使用余额支付订单
         String result2 = tradeOrderServiceProxy.record(null, buildRedPacketTradeOrderDto(order));
     }
     //修改订单状态为已支付， 并更新到数据库
     public void confirmMakePayment(Order order, BigDecimal redPacketPayAmount, BigDecimal capitalPayAmount) {
-        // 调试用
         try {
             Thread.sleep(1000l);
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
         System.out.println("order confirm make payment called. time seq:" + DateFormatUtils.format(Calendar.getInstance(), "yyyy-MM-dd HH:mm:ss"));
-        // 更新订单状态为支付成功
+        //  1.更新订单状态为支付成功
         order.confirm();
         orderRepository.updateOrder(order);
     }
 
     //修改订单状态为支付取消，并更新到数据库
     public void cancelMakePayment(Order order, BigDecimal redPacketPayAmount, BigDecimal capitalPayAmount) {
-        // 调试用
         try {
             Thread.sleep(1000l);
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
         System.out.println("order cancel make payment called.time seq:" + DateFormatUtils.format(Calendar.getInstance(), "yyyy-MM-dd HH:mm:ss"));
-        // 更新订单状态为支付失败
+        //1. 更新订单状态为支付失败
         order.cancelPayment();
         orderRepository.updateOrder(order);
     }

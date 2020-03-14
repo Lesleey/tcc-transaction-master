@@ -16,7 +16,7 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * JDBC 事务存储器
+ * JDBC 事务存储器，使用数据库保存事务日志。
  * <p>
  * Created by changmingxie on 10/30/15.
  */
@@ -113,7 +113,7 @@ public class JdbcTransactionRepository extends CachableTransactionRepository {
             throw new TransactionIOException(ex);
         }
     }
-
+    //创建事务，通过该方法新增事务记录。
     //insert into () values()
     @Override
     protected int doCreate(Transaction transaction) {
@@ -148,7 +148,7 @@ public class JdbcTransactionRepository extends CachableTransactionRepository {
             this.releaseConnection(connection);
         }
     }
-
+    // 通过该方法更新事务的状态
     //update table set where globalid = , branchid = , version = ?
     @Override
     protected int doUpdate(Transaction transaction) {

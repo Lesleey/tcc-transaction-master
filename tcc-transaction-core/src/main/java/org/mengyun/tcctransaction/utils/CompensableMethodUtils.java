@@ -33,7 +33,7 @@ public class CompensableMethodUtils {
     }
 
     /**
-     * 计算方法类型
+     * 通过传播级别计算方法类型：方法类型包括 root、provider、normal、consumer
      *
      * @param propagation 传播级别
      * @param isTransactionActive 是否事务开启
@@ -55,6 +55,11 @@ public class CompensableMethodUtils {
         }
     }
 
+    /**
+     *  通过事务上下文计算方法类型
+     *
+     *
+     * */
     public static MethodType calculateMethodType(TransactionContext transactionContext, boolean isCompensable) {
         if (transactionContext == null && isCompensable) {
             //isRootTransactionMethod

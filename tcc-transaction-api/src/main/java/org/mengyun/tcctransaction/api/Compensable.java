@@ -31,7 +31,7 @@ public @interface Compensable {
     String cancelMethod() default "";
 
     /**
-     * 事务上下文编辑类
+     * 事务上下文编辑类:用来获取或者设置 方法参数中类型为TransactionContext的参数值。
      */
     Class<? extends TransactionContextEditor> transactionContextEditor() default DefaultTransactionContextEditor.class;
 

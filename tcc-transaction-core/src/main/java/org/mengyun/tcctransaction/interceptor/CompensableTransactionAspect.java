@@ -6,7 +6,7 @@ import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Pointcut;
 
 /**
- * 可补偿事务切面
+ * 可补偿事务切面：高优先级
  *
  * Created by changmingxie on 10/30/15.
  */

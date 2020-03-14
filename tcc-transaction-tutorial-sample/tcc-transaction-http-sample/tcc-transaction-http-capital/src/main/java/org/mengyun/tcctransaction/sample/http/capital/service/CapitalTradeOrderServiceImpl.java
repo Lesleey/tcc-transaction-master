@@ -32,10 +32,9 @@ public class CapitalTradeOrderServiceImpl implements CapitalTradeOrderService {
     @Compensable(confirmMethod = "confirmRecord", cancelMethod = "cancelRecord", transactionContextEditor = Compensable.DefaultTransactionContextEditor.class)
     @Transactional
     public String record(TransactionContext transactionContext, CapitalTradeOrderDto tradeOrderDto) {
-        // 调试用
+
         try {
             Thread.sleep(1000l);
-//            Thread.sleep(10000000L);
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
@@ -55,11 +54,10 @@ public class CapitalTradeOrderServiceImpl implements CapitalTradeOrderService {
     }
 
     /*
-    *  修改该交易订单状态是confirm,并更新到数据库，  修改店家金额为增加订单的钱，并更新到数据库
+    *  修改该交易订单状态为confirm,并更新到数据库， 订单交易额添加到商家账户中，并更新到数据库
     * */
     @Transactional
     public void confirmRecord(TransactionContext transactionContext, CapitalTradeOrderDto tradeOrderDto) {
-        // 调试用
         try {
             Thread.sleep(1000l);
         } catch (InterruptedException e) {
@@ -76,7 +74,7 @@ public class CapitalTradeOrderServiceImpl implements CapitalTradeOrderService {
         }
     }
     /*
-    *   修改该交易订单状态为cancel并更新到数据库， 增加用户余额为加上订单的钱，并更新到数据库
+    *   修改该交易订单状态为cancel并更新到数据库， 订单交易额添加到用户余额中，并更新到数据库
     * */
     @Transactional
     public void cancelRecord(TransactionContext transactionContext, CapitalTradeOrderDto tradeOrderDto) {

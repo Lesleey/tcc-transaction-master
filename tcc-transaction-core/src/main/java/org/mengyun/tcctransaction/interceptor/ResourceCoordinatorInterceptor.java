@@ -48,40 +48,39 @@ public class ResourceCoordinatorInterceptor {
     }
 
     private void enlistParticipant(ProceedingJoinPoint pjp) throws IllegalAccessException, InstantiationException {
-        // 获得 @Compensable 注解
         Method method = CompensableMethodUtils.getCompensableMethod(pjp);
         if (method == null) {
             throw new RuntimeException(String.format("join point not found method, point is : %s", pjp.getSignature().getName()));
         }
+        //1. 获取方法上的@Compensable, 用来获取confrim方法名和cancel方法名和传播级别等。
         Compensable compensable = method.getAnnotation(Compensable.class);
-        // 获得 确认执行业务方法 和 取消执行业务方法
         String confirmMethodName = compensable.confirmMethod();
         String cancelMethodName = compensable.cancelMethod();
-        // 获取 当前线程事务第一个(头部)元素
+        //2. 获取当前事务
         Transaction transaction = transactionManager.getCurrentTransaction();
-        // 创建 事务编号
+
         TransactionXid xid = new TransactionXid(transaction.getXid().getGlobalTransactionId());
-        // 如果方法参数中的transactionContext为null,则新建然后赋值到参数中
+        //3. 如果方法参数中的transactionContext为null,则新建TransactionContext然后赋值到该参数中
         if (FactoryBuilder.factoryOf(compensable.transactionContextEditor()).getInstance().get(pjp.getTarget(), method, pjp.getArgs()) == null) {
             FactoryBuilder.factoryOf(compensable.transactionContextEditor()).getInstance().set(new TransactionContext(xid, TransactionStatus.TRYING.getId()), pjp.getTarget(), ((MethodSignature) pjp.getSignature()).getMethod(), pjp.getArgs());
         }
-        // 获得类
+
         Class targetClass = ReflectionUtils.getDeclaringType(pjp.getTarget().getClass(), method.getName(), method.getParameterTypes());
-        // 创建 确认执行方法调用上下文 和 取消执行方法调用上下文
+        // 4. 封装当前参与者的confrim方法的所有信息
         InvocationContext confirmInvocation = new InvocationContext(targetClass,
                 confirmMethodName,
                 method.getParameterTypes(), pjp.getArgs());
+        // 5. 封装当前参与者的cancel方法的所有信息
         InvocationContext cancelInvocation = new InvocationContext(targetClass,
                 cancelMethodName,
                 method.getParameterTypes(), pjp.getArgs());
-        // 创建 事务参与者
+        //6. 将所有信息封装成 事务参与者 添加到当前事务中
         Participant participant =
                 new Participant(
                         xid,
                         confirmInvocation,
                         cancelInvocation,
                         compensable.transactionContextEditor());
-        // 添加 事务参与者 到 事务
         transactionManager.enlistParticipant(participant);
     }
 

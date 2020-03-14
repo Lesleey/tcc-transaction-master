@@ -44,7 +44,7 @@ public class OrderController {
         return mv;
     }
 
-    //获得商店所有商品
+    //显示商店中的所有商品
     @RequestMapping(value = "/user/{userId}/shop/{shopId}", method = RequestMethod.GET)
     public ModelAndView getProductsInShop(@PathVariable long userId,
                                           @PathVariable long shopId) {
@@ -59,7 +59,7 @@ public class OrderController {
         return mv;
     }
 
-    //显示购买的商品细节，和自己的账户细节
+    //显示购买的商品细节，和自己的账户资金细节
     @RequestMapping(value = "/user/{userId}/shop/{shopId}/product/{productId}/confirm", method = RequestMethod.GET)
     public ModelAndView productDetail(@PathVariable long userId,
                                       @PathVariable long shopId,
@@ -77,47 +77,50 @@ public class OrderController {
 
         return mv;
     }
-
+    // 下单的主流程
     @RequestMapping(value = "/placeorder", method = RequestMethod.POST)
     public ModelAndView placeOrder(@RequestParam String redPacketPayAmount,
                                    @RequestParam long shopId,
                                    @RequestParam long payerUserId,
                                    @RequestParam long productId) {
         PlaceOrderRequest request = buildRequest(redPacketPayAmount, shopId, payerUserId, productId);
-        // 下单并支付订单
+        // 1. 下单并支付订单
         String merchantOrderNo = placeOrderService.placeOrder(request.getPayerUserId(), request.getShopId(),
                 request.getProductQuantities(), request.getRedPacketPayAmount());
-        // 返回
+        // 2. 返回下单结果
         ModelAndView mv = new ModelAndView("pay_success");
-        // 查询订单状态
+        // 3.  查询订单状态
         String status = orderService.getOrderStatusByMerchantOrderNo(merchantOrderNo);
-        // 支付结果提示
         String payResultTip = null;
         if ("CONFIRMED".equals(status)) {
             payResultTip = "支付成功";
         } else if ("PAY_FAILED".equals(status)) {
             payResultTip = "支付失败";
         }
+        //  4. 构建显示细节
         mv.addObject("payResult", payResultTip);
-        // 商品信息
         mv.addObject("product", productRepository.findById(productId));
-        // 资金账户金额 和 红包账户金额
         mv.addObject("capitalAmount", accountService.getCapitalAccountByUserId(payerUserId));
         mv.addObject("redPacketAmount", accountService.getRedPacketAccountByUserId(payerUserId));
         return mv;
     }
 
-
+    // 构建下单请求
     private PlaceOrderRequest buildRequest(String redPacketPayAmount, long shopId, long payerUserId, long productId) {
         BigDecimal redPacketPayAmountInBigDecimal = new BigDecimal(redPacketPayAmount);
         if (redPacketPayAmountInBigDecimal.compareTo(BigDecimal.ZERO) < 0)
             throw new InvalidParameterException("invalid red packet amount :" + redPacketPayAmount);
 
         PlaceOrderRequest request = new PlaceOrderRequest();
+
         request.setPayerUserId(payerUserId);
+
         request.setShopId(shopId);
+
         request.setRedPacketPayAmount(new BigDecimal(redPacketPayAmount));
+
         request.getProductQuantities().add(new ImmutablePair<Long, Integer>(productId, 1));
+
         return request;
     }
 }

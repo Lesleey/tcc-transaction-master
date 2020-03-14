@@ -8,7 +8,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * 事务对象序列化
+ * 自定义事务的序列化和反序列化
  *
  * Created by changming.xie on 9/15/16.
  */

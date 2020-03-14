@@ -5,7 +5,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * 事务上下文
+ * 事务上下文：tcc使用该类进行事务的传播
  *
  * Created by changmingxie on 10/30/15.
  */

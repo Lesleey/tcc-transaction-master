@@ -10,11 +10,11 @@ package org.mengyun.tcctransaction.common;
 public enum TransactionType {
 
     /**
-     * 根事务
+     * 根事务：对应主业务
      */
     ROOT(1),
     /**
-     * 分支事务
+     * 分支事务：对应从业务
      */
     BRANCH(2);
 

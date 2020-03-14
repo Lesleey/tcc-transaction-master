@@ -6,7 +6,7 @@ import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Pointcut;
 
 /**
- * 资源协调者切面
+ * 资源协调者切面：低优先级
  *
  * Created by changmingxie on 11/8/15.
  */

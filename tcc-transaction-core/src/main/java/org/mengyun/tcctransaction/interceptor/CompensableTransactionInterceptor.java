@@ -45,22 +45,19 @@ public class CompensableTransactionInterceptor {
 
 
     public Object interceptCompensableMethod(ProceedingJoinPoint pjp) throws Throwable {
-        // 获得带 @Compensable 注解的方法
+        // 1. 获得带 @Compensable 注解的方法
         Method method = CompensableMethodUtils.getCompensableMethod(pjp);
         Compensable compensable = method.getAnnotation(Compensable.class);
-        //获得当前方法的传播级别
         Propagation propagation = compensable.propagation();
-        // 获得 事务上下文
+        //2.  从方法参数中获得 事务上下文
         TransactionContext transactionContext = FactoryBuilder.factoryOf(compensable.transactionContextEditor()).getInstance().get(pjp.getTarget(), method, pjp.getArgs());
-        // 当前线程是否在事务中,意思是当前是否存在事务
         boolean isTransactionActive = transactionManager.isTransactionActive();
-        // 判断事务上下文是否合法
         if (!TransactionUtils.isLegalTransactionContext(isTransactionActive, propagation, transactionContext)) {
             throw new SystemException("no active compensable transaction while propagation is mandatory for method " + method.getName());
         }
-        // 计算方法类型
+        //3. 获得当前的方法类型
         MethodType methodType = CompensableMethodUtils.calculateMethodType(propagation, isTransactionActive, transactionContext);
-        // 处理
+        //4. 根据方法类型调用不同的处理逻辑
         switch (methodType) {
             case ROOT:
                 return rootMethodProceed(pjp);
@@ -71,28 +68,29 @@ public class CompensableTransactionInterceptor {
         }
     }
 
+    // 对于根事务的处理
     private Object rootMethodProceed(ProceedingJoinPoint pjp) throws Throwable {
         Object returnValue;
         Transaction transaction = null;
         try {
-            // 发起根事务
+            //1. 发起根事务
             transaction = transactionManager.begin();
-            // 执行方法原逻辑
+            //2. 执行方法原逻辑
             try {
                 returnValue = pjp.proceed();
             } catch (Throwable tryingException) {
                 if (isDelayCancelException(tryingException)) { // 是否延迟回滚,如果直接回滚会出现数据不一致的问题
                 } else {
                     logger.warn(String.format("compensable transaction trying failed. transaction content:%s", JSON.toJSONString(transaction)), tryingException);
-                    // 回滚事务
+                    // 回滚事务：调用根事务的所有参与者的 cancel 方法
                     transactionManager.rollback();
                 }
                 throw tryingException;
             }
-            // 提交事务
+            // 提交事务：调用根事务的所有参与者的 confirm 方法
             transactionManager.commit();
         } finally {
-            // 将事务从当前线程事务队列移除
+            //3. 将事务从当前线程事务队列移除
             transactionManager.cleanAfterCompletion(transaction);
         }
         return returnValue;
@@ -102,28 +100,25 @@ public class CompensableTransactionInterceptor {
         Transaction transaction = null;
         try {
             switch (TransactionStatus.valueOf(transactionContext.getStatus())) {
+                //1. 如果事务状态是 trying, 则新增事务记录，发起事务。
                 case TRYING:
-                    // 传播发起分支事务
                     transaction = transactionManager.propagationNewBegin(transactionContext);
                     return pjp.proceed();
+                //2. 如果事务上下文中事务状态是 confrim, 则修改事务状态为 confirm, 调用confirm 对应方法逻辑。
                 case CONFIRMING:
                     try {
-                        // 传播获取分支事务
                         transaction = transactionManager.propagationExistBegin(transactionContext);
-                        // 提交事务
                         transactionManager.commit();
                     } catch (NoExistedTransactionException excepton) {
                         //the transaction has been commit,ignore it.
                     }
                     break;
+                //3. 如果事务上下文中事务状态是 cancel，则修改事务状态为 cancel, 调用 cancel 对应方法逻辑。
                 case CANCELLING:
                     try {
-                        // 传播获取分支事务
                         transaction = transactionManager.propagationExistBegin(transactionContext);
-                        // 回滚事务
                         transactionManager.rollback();
                     } catch (NoExistedTransactionException exception) {
-                        //the transaction has been rollback,ignore it.
                     }
                     break;
             }

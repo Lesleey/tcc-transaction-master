@@ -9,6 +9,7 @@ import java.lang.reflect.Method;
 /**
  * Created by changming.xie on 1/18/17.
  * this class is replaced by org.mengyun.tcctransaction.api.Compensable.DefaultTransactionContextEditor
+ *   用于获取或者设置方法参数中类型为 TransactionContext 的参数值
  */
 @Deprecated
 public class MethodTransactionContextEditor implements TransactionContextEditor {

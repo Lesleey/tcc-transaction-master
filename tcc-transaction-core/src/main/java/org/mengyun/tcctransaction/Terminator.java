@@ -9,6 +9,7 @@ import java.io.Serializable;
 import java.lang.reflect.Method;
 
 /**
+ *  通过该类调用 confirm 或 cancel 方法。
  * Created by changmingxie on 10/30/15.
  */
 public class Terminator implements Serializable {

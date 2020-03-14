@@ -5,6 +5,7 @@ import java.util.UUID;
 
 /**
  * Created by changming.xie on 5/31/16.
+ *  用于生成或获取分支事务的id
  */
 @Deprecated
 public class UuidUtils {

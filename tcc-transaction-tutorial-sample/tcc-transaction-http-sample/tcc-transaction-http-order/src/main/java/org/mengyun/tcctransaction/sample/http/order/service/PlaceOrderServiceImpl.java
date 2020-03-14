@@ -32,23 +32,18 @@ public class PlaceOrderServiceImpl {
     PaymentServiceImpl paymentService;
 
     public String placeOrder(long payerUserId, long shopId, List<Pair<Long, Integer>> productQuantities, BigDecimal redPacketPayAmount) {
-        // 获取商店
+        //1. 构建支付订单实体
         Shop shop = shopRepository.findById(shopId);
-        // 创建订单
         Order order = orderService.createOrder(payerUserId, shop.getOwnerUserId(), productQuantities);
-        // 发起支付
         Boolean result = false;
         try {
+            //2. 进入支付主流程
             paymentService.makePayment(order, redPacketPayAmount, order.getTotalAmount().subtract(redPacketPayAmount));
         } catch (ConfirmingException confirmingException) {
-            // exception throws with the tcc transaction status is CONFIRMING,
-            // when tcc transaction is confirming status,
-            // the tcc transaction recovery will try to confirm the whole transaction to ensure eventually consistent.
+            //当事务状态为confirm时抛出异常,tcc-transaction框架会自动重试保证数据一致性
             result = true;
         } catch (CancellingException cancellingException) {
-            // exception throws with the tcc transaction status is CANCELLING,
-            // when tcc transaction is under CANCELLING status,
-            // the tcc transaction recovery will try to cancel the whole transaction to ensure eventually consistent.
+            //当事务状态为cancel时抛出异常,tcc-transaction框架会自动重试保证数据一致性
         } catch (Throwable e) {
             // other exceptions throws at TRYING stage.
             // you can retry or cancel the operation.

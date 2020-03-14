@@ -15,7 +15,8 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * 可缓存的事务存储器抽象类
- * 类似于缓存，  就是给transactionRepository更新数据库的操作外外加入一个缓存，减轻数据库压力
+ * 类似于缓存，  就是给transactionRepository更新数据库的操作外外加入一个缓存。
+ * 将事务id和对应的事务对象的对应关系保存在内存中，用以减轻数据库压力。
  * Created by changmingxie on 10/30/15.
  */
 public abstract class CachableTransactionRepository implements TransactionRepository {

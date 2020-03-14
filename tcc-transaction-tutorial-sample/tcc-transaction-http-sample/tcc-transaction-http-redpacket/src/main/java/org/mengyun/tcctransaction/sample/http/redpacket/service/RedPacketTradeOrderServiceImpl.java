@@ -39,7 +39,7 @@ public class RedPacketTradeOrderServiceImpl implements RedPacketTradeOrderServic
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
-
+        if(true) throw new RuntimeException("");
         System.out.println("red packet try record called. time seq:" + DateFormatUtils.format(Calendar.getInstance(), "yyyy-MM-dd HH:mm:ss"));
 
         TradeOrder tradeOrder = new TradeOrder(

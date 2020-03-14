@@ -14,7 +14,7 @@ import java.util.Map;
  */
 public class ReflectionUtils {
 
-    //是当前方法可以被访问
+    //使当前方法可以被访问
     public static void makeAccessible(Method method) {
         if ((!Modifier.isPublic(method.getModifiers()) || !Modifier.isPublic(method.getDeclaringClass().getModifiers())) && !method.isAccessible()) {
             method.setAccessible(true);

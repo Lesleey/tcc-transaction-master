@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Redis 事务存储器
+ * Redis 事务存储器：使用Redi记录事务日志。
  *
  * Created by changming.xie on 2/24/16.
  * <p/>
@@ -93,7 +93,6 @@ public class RedisTransactionRepository extends CachableTransactionRepository {
                     transaction.updateVersion();
                     // https://redis.io/commands/hsetnx
                     return jedis.hsetnx(key, ByteUtils.longToBytes(transaction.getVersion()), TransactionSerializer.serialize(serializer, transaction));
-                    // TODO add by 芋艿：参照 JdbcTransactionRepository#doUpdate，如果 redis 更新发生异常（例如，网络），设置 transaction 回老版本。
                 }
             });
             // 返回插入条数

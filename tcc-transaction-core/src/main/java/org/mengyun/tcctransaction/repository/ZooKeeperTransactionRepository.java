@@ -13,7 +13,7 @@ import java.util.Date;
 import java.util.List;
 
 /**
- * Zookeeper 事务存储器
+ * Zookeeper 事务存储器：通过zk记录事务日志。
  *
  * Created by changming.xie on 2/18/16.
  */

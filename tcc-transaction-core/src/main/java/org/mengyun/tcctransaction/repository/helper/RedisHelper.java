@@ -8,14 +8,14 @@ import javax.transaction.xa.Xid;
 import java.util.*;
 
 /**
- * Redis 工具类, 方便构建Redis的key, 和存取transaction
+ * Redis 工具类, 方便构建Redis的key, 方便存取对应的值transaction
  *
  * Created by changming.xie on 9/15/16.
  */
 public class RedisHelper {
 
     /**
-     * 创建事务的 Redis Key  将key前缀， 和事务全局id和分支id复制成一个byte数组返回
+     * 通过key前缀和事务id创建一个 全局唯一的redis的 key。
      *
      * @param keyPrefix key 前缀
      * @param xid 事务
@@ -25,7 +25,6 @@ public class RedisHelper {
         byte[] prefix = keyPrefix.getBytes();
         byte[] globalTransactionId = xid.getGlobalTransactionId();
         byte[] branchQualifier = xid.getBranchQualifier();
-        // 拼接 key
         byte[] key = new byte[prefix.length + globalTransactionId.length + branchQualifier.length];
         System.arraycopy(prefix, 0, key, 0, prefix.length);
         System.arraycopy(globalTransactionId, 0, key, prefix.length, globalTransactionId.length);
@@ -58,7 +57,7 @@ public class RedisHelper {
      * @return 事务
      */
     public static byte[] getKeyValue(Jedis jedis, final byte[] key) {
-        // https://redis.io/commands/hget
+
         Map<byte[], byte[]> fieldValueMap = jedis.hgetAll(key);
         // 按照 key (version) 正序
         List<Map.Entry<byte[], byte[]>> entries = new ArrayList<Map.Entry<byte[], byte[]>>(fieldValueMap.entrySet());
@@ -76,7 +75,7 @@ public class RedisHelper {
     }
 
     /**
-     * 执行命名
+     * 执行回调
      *
      * @param jedisPool redis pool
      * @param callback 命名
